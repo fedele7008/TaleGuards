@@ -1,0 +1,22 @@
+services:
+  akashic_db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${AKASHIC_DB_NAME}
+      MYSQL_USER: ${AKASHIC_DB_USER}
+      MYSQL_PASSWORD: ${AKASHIC_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${AKASHIC_DB_ROOT_PASSWORD}
+    ports:
+      - ${AKASHIC_DB_PORT}:3306/tcp
+    volumes:
+      - akashic_db_data:/var/lib/mysql
+        
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - ${ADMINER_PORT}:8080/tcp
+        
+volumes:
+  akashic_db_data: {}

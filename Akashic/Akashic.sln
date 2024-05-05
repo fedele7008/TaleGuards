@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthManager", "AuthManager\AuthManager.csproj", "{05F837C4-D240-4D4A-ADC5-C36E0C0C7AA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthManager.Tests", "AuthManager.Tests\AuthManager.Tests.csproj", "{29E4D10C-22B1-4A99-960A-7920D816C12D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{05F837C4-D240-4D4A-ADC5-C36E0C0C7AA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05F837C4-D240-4D4A-ADC5-C36E0C0C7AA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05F837C4-D240-4D4A-ADC5-C36E0C0C7AA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05F837C4-D240-4D4A-ADC5-C36E0C0C7AA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29E4D10C-22B1-4A99-960A-7920D816C12D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29E4D10C-22B1-4A99-960A-7920D816C12D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29E4D10C-22B1-4A99-960A-7920D816C12D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29E4D10C-22B1-4A99-960A-7920D816C12D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
