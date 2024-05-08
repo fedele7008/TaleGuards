@@ -1,8 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AuthManager.Models;
 
+[SuppressMessage("ReSharper", "CollectionNeverUpdated.Global")]
+[SuppressMessage("ReSharper", "ReturnTypeCanBeEnumerable.Global")]
+[SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Global")]
+[SuppressMessage("ReSharper", "EntityFramework.ModelValidation.CircularDependency")]
 public class Account
 {
     [Column(TypeName = "INT")] [Key] public int Uid { get; set; }
@@ -12,6 +17,10 @@ public class Account
     [Column(TypeName = "VARCHAR(255)")] [Required] public string? Username { get; set; }
     [Column(TypeName = "TINYINT(1)")] [Required] public bool Verified { get; set; }
     [Column(TypeName = "TINYINT(1)")] [Required] public bool Admin { get; set; }
-    public IEnumerable<Service> Services { get; } = [];
-    public IEnumerable<Access> Accesses { get; } = [];
+    
+    // DO NOT USE IEnumerable FOR FOLLOWING Lists. IT WILL CONFLICT WITH EntityFramework core
+    public List<Service> Services { get; } = [];
+    public List<Access> Accesses { get; } = [];
+    public List<SuspensionLog> SuspensionLogs { get; } = [];
+    public List<SuspensionLog> ActionLogs { get; } = [];
 }

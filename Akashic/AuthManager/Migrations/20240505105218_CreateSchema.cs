@@ -58,23 +58,64 @@ namespace AuthManager.Migrations
                 name: "Accesses",
                 columns: table => new
                 {
-                    AccountsUid = table.Column<int>(type: "INT", nullable: false),
-                    ServicesSid = table.Column<int>(type: "INT", nullable: false),
+                    Uid = table.Column<int>(type: "INT", nullable: false),
+                    Sid = table.Column<int>(type: "INT", nullable: false),
                     Banned = table.Column<bool>(type: "TINYINT(1)", nullable: false, defaultValue: false),
                     SuspensionEndAt = table.Column<DateTime>(type: "DATETIME(6)", nullable: true, defaultValueSql: "NULL")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Accesses", x => new { x.AccountsUid, x.ServicesSid });
+                    table.PrimaryKey("PK_Accesses", x => new { x.Sid, x.Uid });
                     table.ForeignKey(
-                        name: "FK_Accesses_Accounts_AccountsUid",
-                        column: x => x.AccountsUid,
+                        name: "FK_Accesses_Accounts_Uid",
+                        column: x => x.Uid,
                         principalTable: "Accounts",
                         principalColumn: "Uid",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Accesses_Services_ServicesSid",
-                        column: x => x.ServicesSid,
+                        name: "FK_Accesses_Services_Sid",
+                        column: x => x.Sid,
+                        principalTable: "Services",
+                        principalColumn: "Sid",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "SuspensionLogs",
+                columns: table => new
+                {
+                    Lid = table.Column<int>(type: "INT", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Type = table.Column<string>(type: "VARCHAR(64)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    LoggedAt = table.Column<DateTime>(type: "DATETIME(6)", nullable: false, defaultValueSql: "(UTC_TIMESTAMP)"),
+                    SuspensionEndAt = table.Column<DateTime>(type: "DATETIME(6)", nullable: true, defaultValueSql: "NULL"),
+                    Reason = table.Column<string>(type: "VARCHAR(5000)", nullable: false, defaultValue: "")
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Comment = table.Column<string>(type: "VARCHAR(1000)", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    AssigneeUid = table.Column<int>(type: "INT", nullable: false),
+                    AssignerUid = table.Column<int>(type: "INT", nullable: true),
+                    Sid = table.Column<int>(type: "INT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SuspensionLogs", x => x.Lid);
+                    table.ForeignKey(
+                        name: "FK_SuspensionLogs_Accounts_AssigneeUid",
+                        column: x => x.AssigneeUid,
+                        principalTable: "Accounts",
+                        principalColumn: "Uid",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SuspensionLogs_Accounts_AssignerUid",
+                        column: x => x.AssignerUid,
+                        principalTable: "Accounts",
+                        principalColumn: "Uid");
+                    table.ForeignKey(
+                        name: "FK_SuspensionLogs_Services_Sid",
+                        column: x => x.Sid,
                         principalTable: "Services",
                         principalColumn: "Sid",
                         onDelete: ReferentialAction.Cascade);
@@ -82,9 +123,9 @@ namespace AuthManager.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Accesses_ServicesSid",
+                name: "IX_Accesses_Uid",
                 table: "Accesses",
-                column: "ServicesSid");
+                column: "Uid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Email",
@@ -103,6 +144,21 @@ namespace AuthManager.Migrations
                 table: "Services",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SuspensionLogs_AssigneeUid",
+                table: "SuspensionLogs",
+                column: "AssigneeUid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SuspensionLogs_AssignerUid",
+                table: "SuspensionLogs",
+                column: "AssignerUid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SuspensionLogs_Sid",
+                table: "SuspensionLogs",
+                column: "Sid");
         }
 
         /// <inheritdoc />
@@ -110,6 +166,9 @@ namespace AuthManager.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Accesses");
+
+            migrationBuilder.DropTable(
+                name: "SuspensionLogs");
 
             migrationBuilder.DropTable(
                 name: "Accounts");
