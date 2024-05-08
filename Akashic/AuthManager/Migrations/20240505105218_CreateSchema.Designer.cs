@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthManager.Migrations
 {
     [DbContext(typeof(AkashicDbContext))]
-    [Migration("20240505064038_CreateSchema")]
+    [Migration("20240505105218_CreateSchema")]
     partial class CreateSchema
     {
         /// <inheritdoc />
@@ -27,10 +27,10 @@ namespace AuthManager.Migrations
 
             modelBuilder.Entity("AuthManager.Models.Access", b =>
                 {
-                    b.Property<int>("AccountsUid")
+                    b.Property<int>("Sid")
                         .HasColumnType("INT");
 
-                    b.Property<int>("ServicesSid")
+                    b.Property<int>("Uid")
                         .HasColumnType("INT");
 
                     b.Property<bool>("Banned")
@@ -43,9 +43,9 @@ namespace AuthManager.Migrations
                         .HasColumnType("DATETIME(6)")
                         .HasDefaultValueSql("NULL");
 
-                    b.HasKey("AccountsUid", "ServicesSid");
+                    b.HasKey("Sid", "Uid");
 
-                    b.HasIndex("ServicesSid");
+                    b.HasIndex("Uid");
 
                     b.ToTable("Accesses");
                 });
@@ -121,29 +121,116 @@ namespace AuthManager.Migrations
                     b.ToTable("Services");
                 });
 
+            modelBuilder.Entity("AuthManager.Models.SuspensionLog", b =>
+                {
+                    b.Property<int>("Lid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INT");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Lid"));
+
+                    b.Property<int>("AssigneeUid")
+                        .HasColumnType("INT");
+
+                    b.Property<int?>("AssignerUid")
+                        .HasColumnType("INT");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("VARCHAR(1000)");
+
+                    b.Property<DateTime?>("LoggedAt")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("DATETIME(6)")
+                        .HasDefaultValueSql("(UTC_TIMESTAMP)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("VARCHAR(5000)")
+                        .HasDefaultValue("");
+
+                    b.Property<int>("Sid")
+                        .HasColumnType("INT");
+
+                    b.Property<DateTime?>("SuspensionEndAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("DATETIME(6)")
+                        .HasDefaultValueSql("NULL");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(64)");
+
+                    b.HasKey("Lid");
+
+                    b.HasIndex("AssigneeUid");
+
+                    b.HasIndex("AssignerUid");
+
+                    b.HasIndex("Sid");
+
+                    b.ToTable("SuspensionLogs");
+                });
+
             modelBuilder.Entity("AuthManager.Models.Access", b =>
                 {
-                    b.HasOne("AuthManager.Models.Account", null)
+                    b.HasOne("AuthManager.Models.Service", "Service")
                         .WithMany("Accesses")
-                        .HasForeignKey("AccountsUid")
+                        .HasForeignKey("Sid")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AuthManager.Models.Service", null)
+                    b.HasOne("AuthManager.Models.Account", "Account")
                         .WithMany("Accesses")
-                        .HasForeignKey("ServicesSid")
+                        .HasForeignKey("Uid")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("AuthManager.Models.SuspensionLog", b =>
+                {
+                    b.HasOne("AuthManager.Models.Account", "AssigneeAccount")
+                        .WithMany("SuspensionLogs")
+                        .HasForeignKey("AssigneeUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AuthManager.Models.Account", "AssignerAccount")
+                        .WithMany("ActionLogs")
+                        .HasForeignKey("AssignerUid");
+
+                    b.HasOne("AuthManager.Models.Service", "Service")
+                        .WithMany("SuspensionLogs")
+                        .HasForeignKey("Sid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AssigneeAccount");
+
+                    b.Navigation("AssignerAccount");
+
+                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("AuthManager.Models.Account", b =>
                 {
                     b.Navigation("Accesses");
+
+                    b.Navigation("ActionLogs");
+
+                    b.Navigation("SuspensionLogs");
                 });
 
             modelBuilder.Entity("AuthManager.Models.Service", b =>
                 {
                     b.Navigation("Accesses");
+
+                    b.Navigation("SuspensionLogs");
                 });
 #pragma warning restore 612, 618
         }
