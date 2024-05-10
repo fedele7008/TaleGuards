@@ -8,7 +8,7 @@ namespace AuthManager.Controllers;
 
 [ApiController]
 [Route("Akashic/[controller]")]
-public class AuthController(ILogger<AuthController> logger, IAccountRepo accountRepo, IServiceRepo serviceRepo, IAccessRepo accessRepo, ISuspensionLogRepo logRepo) : Controller
+public class AuthController(ILogger<AuthController> logger, IJwtUtilities jwtManager, IAccountRepo accountRepo, IServiceRepo serviceRepo, IAccessRepo accessRepo, ISuspensionLogRepo logRepo) : Controller
 {
     [HttpGet("status")]
     [ProducesResponseType(200, Type = typeof(string))]
@@ -103,7 +103,11 @@ public class AuthController(ILogger<AuthController> logger, IAccountRepo account
                 if (service is not null)
                 {
                     serviceName = service.Name;
-                    // TODO: Create jwt tokens for the service
+                    var tokens = jwtManager.GenerateJwtTokens(account!.Uid, account.Email!,
+                        account.Username!, (DateTime)account.CreatedAt!, account.Verified, account.Admin,
+                        service.SecretKey!);
+                    accessToken = tokens.AccessToken;
+                    refreshToken = tokens.RefreshToken;
                 }
                 else
                 {
@@ -130,14 +134,14 @@ public class AuthController(ILogger<AuthController> logger, IAccountRepo account
         catch (OperationCanceledException ex)
         {
             await transaction.RollbackAsync();
-            logger.LogError("User registration cancelled:\n{Message}", ex.Message);
-            return BadRequest(new { Result = ex.Message});
+            logger.LogError("User registration cancelled:\n{Message}", ex);
+            return BadRequest(new { Result = ex.ToString() });
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            logger.LogError("User registration failed:\n{Message}", ex.Message);
-            return BadRequest(new { Result = ex.Message});
+            logger.LogError("User registration failed:\n{Message}", ex);
+            return BadRequest(new { Result = ex.ToString() });
         }
     }
 }
