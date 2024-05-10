@@ -1,5 +1,6 @@
 using AuthManager.Abstractions;
 using AuthManager.Data;
+using AuthManager.Extensions;
 using AuthManager.Repositories;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,7 @@ public static class Program
         builder.Services.AddScoped<IServiceRepo, ServiceRepo>();
         builder.Services.AddScoped<IAccessRepo, AccessRepo>();
         builder.Services.AddScoped<ISuspensionLogRepo, SuspensionLogRepo>();
+        builder.Services.AddScoped<IJwtUtilities, JwtUtilities>();
         builder.Services.AddDbContext<AkashicDbContext>(options =>
         {
             options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 3, 0)));
