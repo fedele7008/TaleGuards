@@ -13,6 +13,7 @@ public class Service
     [Column(TypeName = "INT")] [Key] public int Sid { get; set; }
     [Column(TypeName = "VARCHAR(255)")] [Required] public string? Name { get; set; }
     [Column(TypeName = "CHAR(64)")] [Required] public string? SecretKey { get; set; }
+    [Column(TypeName = "VARCHAR(512)")] [Required] public string? ConnectionUrl { get; set; }
     
     // DO NOT USE IEnumerable FOR FOLLOWING Lists. IT WILL CONFLICT WITH EntityFramework core
     public List<Account> Accounts { get; } = [];
