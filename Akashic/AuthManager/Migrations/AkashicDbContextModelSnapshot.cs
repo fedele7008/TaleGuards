@@ -102,6 +102,10 @@ namespace AuthManager.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Sid"));
 
+                    b.Property<string>("ConnectionUrl")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(512)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("VARCHAR(255)");

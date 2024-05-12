@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthManager.Migrations
 {
     [DbContext(typeof(AkashicDbContext))]
-    [Migration("20240505105218_CreateSchema")]
+    [Migration("20240512063827_CreateSchema")]
     partial class CreateSchema
     {
         /// <inheritdoc />
@@ -104,6 +104,10 @@ namespace AuthManager.Migrations
                         .HasColumnType("INT");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Sid"));
+
+                    b.Property<string>("ConnectionUrl")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(512)");
 
                     b.Property<string>("Name")
                         .IsRequired()

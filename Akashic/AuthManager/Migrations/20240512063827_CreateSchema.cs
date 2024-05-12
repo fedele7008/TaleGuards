@@ -46,6 +46,8 @@ namespace AuthManager.Migrations
                     Name = table.Column<string>(type: "VARCHAR(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     SecretKey = table.Column<string>(type: "CHAR(64)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ConnectionUrl = table.Column<string>(type: "VARCHAR(512)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
