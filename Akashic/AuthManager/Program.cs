@@ -27,6 +27,7 @@ public static class Program
             options.JsonSerializerOptions.PropertyNamingPolicy = null;
             options.JsonSerializerOptions.WriteIndented = true;
         });
+        builder.Services.AddSingleton<IRsaCryptoService, RsaCryptoService>();
         builder.Services.AddScoped<IAccountRepo, AccountRepo>();
         builder.Services.AddScoped<IServiceRepo, ServiceRepo>();
         builder.Services.AddScoped<IAccessRepo, AccessRepo>();
