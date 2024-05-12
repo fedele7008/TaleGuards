@@ -8,7 +8,14 @@ namespace AuthManager.Controllers;
 
 [ApiController]
 [Route("Akashic/[controller]")]
-public class AuthController(ILogger<AuthController> logger, IJwtUtilities jwtManager, IAccountRepo accountRepo, IServiceRepo serviceRepo, IAccessRepo accessRepo, ISuspensionLogRepo logRepo) : Controller
+public class AuthController(
+    ILogger<AuthController> logger,
+    IJwtUtilities jwtManager,
+    IRsaCryptoService rsaManager,
+    IAccountRepo accountRepo,
+    IServiceRepo serviceRepo,
+    IAccessRepo accessRepo,
+    ISuspensionLogRepo logRepo) : Controller
 {
     [HttpGet("status")]
     [ProducesResponseType(200, Type = typeof(string))]
