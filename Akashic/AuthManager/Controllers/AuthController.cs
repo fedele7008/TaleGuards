@@ -151,4 +151,75 @@ public class AuthController(
             return BadRequest(new { Result = ex.ToString() });
         }
     }
+
+    [HttpPost("login")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    [Produces("application/json")]
+    public async Task<IActionResult> Login([FromBody] UserLoginRequestDto loginCredentials, [FromQuery] int serviceId)
+    {
+        var emailExists = await accountRepo.CheckEmailExistsAsync(loginCredentials.Email);
+        if (!emailExists)
+        {
+            logger.LogError("User login failed");
+            return Unauthorized(new { Result = "Login not successful"});
+        }
+        
+        var service = await serviceRepo.GetByIdAsync(serviceId);
+        if (service is null)
+        {
+            logger.LogError("Service not found");
+            return BadRequest(new { Result = $"Service not found (Sid: {serviceId})"});
+        }
+        
+        var account = await accountRepo.GetAccountByEmailAsync(loginCredentials.Email) 
+                      ?? throw new NullReferenceException("Account is null");
+
+        var isPasswordValid = BCrypt.Net.BCrypt.Verify(loginCredentials.Password, account.PasswordHash);
+        if (!isPasswordValid)
+        {
+            logger.LogError("User login failed");
+            return Unauthorized(new { Result = "Login not successful"});
+        }
+
+        var access = await accountRepo.GetAccountAccessByIdAsync(serviceId, account.Uid) 
+                     ?? throw new NullReferenceException("Access is null");
+
+        if (access.Banned)
+        {
+            logger.LogError("User login failed");
+            return Unauthorized(new { Result = "User is banned from service"});
+        }
+
+        if (access.SuspensionEndAt is not null)
+        {
+            if (access.SuspensionEndAt < DateTime.UtcNow)
+            {
+                await accountRepo.UnsuspendAccountByIdAsync(serviceId, account.Uid);
+                await accountRepo.SaveChangesAsync();
+            }
+            else
+            {
+                logger.LogError("User login failed");
+                return Unauthorized(new { Result = $"User is suspended from service (suspension ends at {access.SuspensionEndAt.ToString()})"});
+            }
+        }
+        
+        var tokens = jwtManager.GenerateJwtTokens(account!.Uid, account.Email!,
+            account.Username!, (DateTime)account.CreatedAt!, account.Verified, account.Admin,
+            service.SecretKey!);
+        
+        return Ok(new
+        {
+            Result = "Login successful", 
+            Detail = new
+            {
+                Account = account.ToDto(),
+                TargetService = service.Name,
+                AcessToken = tokens.AccessToken,
+                RefreshToken = tokens.RefreshToken
+            }
+        });
+    }
 }
