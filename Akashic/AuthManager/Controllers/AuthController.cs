@@ -31,6 +31,19 @@ public class AuthController(
         return Ok(JsonSerializer.Serialize(response));
     }
 
+    [HttpGet("username-availability")]
+    [ProducesResponseType(200)]
+    [Produces("application/json")]
+    public async Task<IActionResult> CheckUsername([FromQuery] string username)
+    {
+        var exist = await accountRepo.CheckUsernameExistsAsync(username);
+        return Ok(JsonSerializer.Serialize(new ResponseDto()
+        {
+            Type = exist ? ResponseType.UsernameTaken : ResponseType.UsernameAvailable,
+            Result = exist ? "Username Taken" : "Username Available"
+        }));
+    }
+
     [HttpPost("register")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]

@@ -3,6 +3,8 @@ namespace AuthManager.DataTransferObjects;
 public enum ResponseType
 {
     StatusCheckSuccessful = 0,
+    UsernameAvailable,
+    UsernameTaken,
     UserRegistrationInvalidEmail,
     UserRegistrationInvalidPassword,
     UserRegistrationInvalidUsername,
