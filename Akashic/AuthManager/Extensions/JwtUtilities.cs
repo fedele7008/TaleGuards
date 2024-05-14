@@ -65,6 +65,34 @@ public class JwtUtilities : IJwtUtilities
         };
     }
 
+    public string GenerateServiceValidationToken(int sid, string name, string secretKey)
+    {
+        var claims = new List<Claim>
+        {
+            new ("sid", sid.ToString()),
+            new ("serviceName", name)
+        };
+        
+        var claimsIdentity = new ClaimsIdentity(claims, "ServiceRegistrationToken");
+
+        var sha256SecretKey = Sha256HashConverter.ComputeHash(Encoding.UTF8.GetBytes(secretKey));
+        
+        var tokenSecurityDescriptor = new SecurityTokenDescriptor()
+        {
+            Subject = claimsIdentity,
+            Issuer = "Akashic",
+            Audience = "Akashic",
+            IssuedAt = DateTime.UtcNow,
+            Expires = DateTime.UtcNow.Add(TimeSpan.FromSeconds(10)),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(sha256SecretKey),
+                SecurityAlgorithms.HmacSha256Signature, SecurityAlgorithms.Sha256Digest)
+        };
+
+        var token = TokenHandler.WriteToken(TokenHandler.CreateToken(tokenSecurityDescriptor));
+
+        return token;
+    }
+
     public JwtSecurityToken? ValidateJwtToken(string token, string secretKey)
     {
         var sha256SecretKey = Sha256HashConverter.ComputeHash(Encoding.UTF8.GetBytes(secretKey));

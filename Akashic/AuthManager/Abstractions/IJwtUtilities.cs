@@ -8,6 +8,8 @@ public interface IJwtUtilities
     public TokensDto GenerateJwtTokens(int uid, string email, string username, DateTime createdAt, bool isVerified,
         bool isAdmin, string secretKey, TimeSpan? accessTokenLifeSpan = null, TimeSpan? refreshTokenLifeSpan = null);
 
+    public string GenerateServiceValidationToken(int sid, string name, string secretKey);
+    
     public JwtSecurityToken? ValidateJwtToken(string token, string secretKey);
     
     public JwtSecurityToken ReadJwtToken(string token, string secretKey);

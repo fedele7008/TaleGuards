@@ -8,8 +8,9 @@ public class RsaCryptoService : IRsaCryptoService
 {
     private RSACryptoServiceProvider Rsa { get; } = new();
     private string PrivateKey { get; set; }
-    public string PublicKey { get; set; }
+    private string PublicKey { get; set; }
     
+    public string GetPublicKey() => PublicKey;
     public RsaCryptoService()
     {
         var privateKey = RSA.Create().ExportParameters(true);

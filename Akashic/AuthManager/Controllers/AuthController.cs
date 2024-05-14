@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AuthManager.Abstractions;
 using AuthManager.DataTransferObjects;
 using AuthManager.Extensions;
@@ -22,7 +23,12 @@ public class AuthController(
     [Produces("application/json")]
     public IActionResult StatusCheck()
     {
-        return Ok(new { Result = "Connection to Akashic Authentication Server is Successful"});
+        var response = new ResponseDto()
+        {
+            Type = ResponseType.StatusCheckSuccessful,
+            Result = "Connection to Akashic Authentication Server is Successful",
+        };
+        return Ok(JsonSerializer.Serialize(response));
     }
 
     [HttpPost("register")]
@@ -34,19 +40,34 @@ public class AuthController(
         if (!user.Email.IsValidEmail())
         {
             logger.LogError("User registration failed:\nInvalid Email");
-            return BadRequest(new { Result = "Invalid Email"});
+            return BadRequest(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserRegistrationInvalidEmail,
+                Result = "Invalid Email",
+                Detail = "Must follow email format"
+            }));
         }
 
         if (!user.Password.IsValidPassword())
         {
             logger.LogError("User registration failed:\nInvalid Password");
-            return BadRequest(new { Result = "Invalid Password" });
+            return BadRequest(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserRegistrationInvalidPassword,
+                Result = "Invalid Password",
+                Detail = "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase, one number, and one special character"
+            }));
         }
 
         if (!user.Username.IsValidUsername())
         {
             logger.LogError("User registration failed:\nInvalid Username");
-            return BadRequest(new { Result = "Invalid Username"});
+            return BadRequest(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserRegistrationInvalidUsername,
+                Result = "Invalid Username",
+                Detail = "Username can only contain alphabet letters and numbers"
+            }));
         }
 
         await using var transaction = await accountRepo.BeginTransactionAsync();
@@ -60,7 +81,11 @@ public class AuthController(
             {
                 await transaction.RollbackAsync();
                 logger.LogError("User registration failed:\nEmail already exists");
-                return BadRequest(new { Result = "Email already exists"});
+                return BadRequest(JsonSerializer.Serialize(new ResponseDto()
+                {
+                    Type = ResponseType.UserRegistrationDuplicateEmail,
+                    Result = "Email already exists"
+                }));
             }
             
             var usernameExists = await accountRepo.CheckUsernameExistsAsync(user.Username);
@@ -69,7 +94,11 @@ public class AuthController(
             {
                 await transaction.RollbackAsync();
                 logger.LogError("User registration failed:\nUsername already exists");
-                return BadRequest(new { Result = "Username already exists"});
+                return BadRequest(JsonSerializer.Serialize(new ResponseDto()
+                {
+                    Type = ResponseType.UserRegistrationDuplicateUsername,
+                    Result = "Username already exists"
+                }));
             }
             
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(user.Password);
@@ -125,30 +154,43 @@ public class AuthController(
             await accountRepo.SaveChangesAsync();
             await transaction.CommitAsync();
             logger.LogInformation("User registration pushed to database, ending transaction");
-            
-            return Ok(new
+
+            return Ok(JsonSerializer.Serialize(new ResponseDto()
             {
-                Result = "User successfully registered", 
-                Detail = new
+                Type = ResponseType.UserRegistrationSuccessful,
+                Result = "User successfully registered",
+                Data = new ServiceAccessDto()
                 {
                     Account = account!.ToDto(),
-                    TargetService = serviceName,
-                    AcessToken = accessToken,
+                    TargetService = serviceName!,
+                    AccessToken = accessToken,
                     RefreshToken = refreshToken
                 }
-            });
+            }));
         }
         catch (OperationCanceledException ex)
         {
             await transaction.RollbackAsync();
             logger.LogError("User registration cancelled:\n{Message}", ex);
-            return BadRequest(new { Result = ex.ToString() });
+            return BadRequest(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserRegistrationCancelled,
+                Result = "User registration cancelled",
+                Detail = ex.ToString(),
+                Data = ex
+            }));
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            logger.LogError("User registration failed:\n{Message}", ex);
-            return BadRequest(new { Result = ex.ToString() });
+            logger.LogCritical("User registration failed:\n{Message}", ex);
+            return BadRequest(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserRegistrationFailed,
+                Result = "User registration failed",
+                Detail = ex.ToString(),
+                Data = ex
+            }));
         }
     }
 
@@ -159,18 +201,27 @@ public class AuthController(
     [Produces("application/json")]
     public async Task<IActionResult> Login([FromBody] UserLoginRequestDto loginCredentials, [FromQuery] int serviceId)
     {
-        var emailExists = await accountRepo.CheckEmailExistsAsync(loginCredentials.Email);
-        if (!emailExists)
-        {
-            logger.LogError("User login failed");
-            return Unauthorized(new { Result = "Login not successful"});
-        }
-        
         var service = await serviceRepo.GetByIdAsync(serviceId);
         if (service is null)
         {
             logger.LogError("Service not found");
-            return BadRequest(new { Result = $"Service not found (Sid: {serviceId})"});
+            return BadRequest(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserLoginInvalidServiceId,
+                Result = "Service not found",
+                Detail = $"Requested Sid: {serviceId}",
+            }));
+        }
+        
+        var emailExists = await accountRepo.CheckEmailExistsAsync(loginCredentials.Email);
+        if (!emailExists)
+        {
+            logger.LogError("User login failed");
+            return Unauthorized(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserLoginFailed,
+                Result = "Login not successful"
+            }));
         }
         
         var account = await accountRepo.GetAccountByEmailAsync(loginCredentials.Email) 
@@ -180,7 +231,11 @@ public class AuthController(
         if (!isPasswordValid)
         {
             logger.LogError("User login failed");
-            return Unauthorized(new { Result = "Login not successful"});
+            return Unauthorized(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserLoginFailed,
+                Result = "Login not successful"
+            }));
         }
 
         var access = await accountRepo.GetAccountAccessByIdAsync(serviceId, account.Uid) 
@@ -189,7 +244,12 @@ public class AuthController(
         if (access.Banned)
         {
             logger.LogError("User login failed");
-            return Unauthorized(new { Result = "User is banned from service"});
+            return Unauthorized(JsonSerializer.Serialize(new ResponseDto()
+            {
+                Type = ResponseType.UserLoginBannedFromService,
+                Result = "Login not successful",
+                Detail = $"User is permanently banned from requested Sid: {serviceId}"
+            }));
         }
 
         if (access.SuspensionEndAt is not null)
@@ -202,24 +262,31 @@ public class AuthController(
             else
             {
                 logger.LogError("User login failed");
-                return Unauthorized(new { Result = $"User is suspended from service (suspension ends at {access.SuspensionEndAt.ToString()})"});
+                return Unauthorized(JsonSerializer.Serialize(new ResponseDto()
+                {
+                    Type = ResponseType.UserLoginSuspendedFromService,
+                    Result = "Login not successful",
+                    Detail = $"User is temporarily banned from requested Sid: {serviceId}\nSuspension ends at {access.SuspensionEndAt.ToString()}"
+                }));
             }
         }
         
-        var tokens = jwtManager.GenerateJwtTokens(account!.Uid, account.Email!,
+        var tokens = jwtManager.GenerateJwtTokens(account.Uid, account.Email!,
             account.Username!, (DateTime)account.CreatedAt!, account.Verified, account.Admin,
             service.SecretKey!);
         
-        return Ok(new
+        logger.LogInformation("User \"{username}\" ({uid} - {email}) successfully logged into {serviceName}", account.Username, account.Uid, account.Email, service.Name);
+        return Ok(JsonSerializer.Serialize(new ResponseDto()
         {
-            Result = "Login successful", 
-            Detail = new
+            Type = ResponseType.UserLoginSuccessful,
+            Result = "Login successful",
+            Data = new ServiceAccessDto()
             {
                 Account = account.ToDto(),
-                TargetService = service.Name,
-                AcessToken = tokens.AccessToken,
+                TargetService = service.Name!,
+                AccessToken = tokens.AccessToken,
                 RefreshToken = tokens.RefreshToken
             }
-        });
+        }));
     }
 }
